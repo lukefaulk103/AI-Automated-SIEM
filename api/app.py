@@ -1,15 +1,34 @@
+import sys
+import subprocess
+
 try:
     from flask import Flask, jsonify, request  # type: ignore[import]
-except ImportError:
-    raise ImportError("Flask is not installed. Run: pip install flask")
+except ModuleNotFoundError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "flask"])
+    from flask import Flask, jsonify, request  # type: ignore[import]
 
 from datetime import datetime, UTC
+
+try:
+    from elasticsearch import Elasticsearch  # type: ignore[import]
+except ModuleNotFoundError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "elasticsearch"])
+    from elasticsearch import Elasticsearch  # type: ignore[import]
+
 import uuid
 
 app = Flask(__name__)
 
-# Temporary log storage
-logs = []
+# Connect to Elasticsearch container
+es = Elasticsearch(
+    "http://elasticsearch:9200"
+)
+
+# Verify Elasticsearch connection
+if es.ping():
+    print("Connected to Elasticsearch")
+else:
+    print("Failed to connect to Elasticsearch")
 
 
 @app.route("/")
@@ -31,49 +50,55 @@ def receive_log():
 
     data = request.json
 
-    # Validate required fields
-    required_fields = [
-        "source",
-        "event_type",
-        "severity"
-    ]
-
-    missing_fields = [
-        field for field in required_fields 
-        if field not in data
-    ]
-
-    if missing_fields:
-        return jsonify({
-            "error": "Missing required fields",
-            "missing": missing_fields
-        }), 400
-
-
     log_entry = {
         "id": str(uuid.uuid4()),
         "timestamp": datetime.now(UTC).isoformat(),
-        "source": data["source"],
-        "event_type": data["event_type"],
-        "severity": data["severity"],
+        "source": data.get("source"),
+        "event_type": data.get("event_type"),
+        "severity": data.get("severity"),
         "details": data
     }
 
-
-    logs.append(log_entry)
+    es.index(
+        index="security-logs",
+        document=log_entry
+    )
 
     return jsonify({
-        "message": "Log received",
-        "log_id": log_entry["id"]
-    }), 201
-
+        "message": "Log stored",
+        "id": log_entry["id"]
+    })
 
 
 @app.route("/logs", methods=["GET"])
 def get_logs():
 
+    response = es.search(
+        index="security-logs",
+        size=100,
+        query={
+            "match_all": {}
+        }
+    )
+
+    logs = []
+
+    for hit in response["hits"]["hits"]:
+        logs.append(hit["_source"])
+
     return jsonify(logs)
 
+
+@app.route("/stats")
+def stats():
+
+    response = es.count(
+        index="security-logs"
+    )
+
+    return jsonify({
+        "total_events": response["count"]
+    })
 
 
 if __name__ == "__main__":
