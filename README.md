@@ -150,3 +150,19 @@ Invoke-RestMethod `
     "Content-Type"="application/json"
 } `
 -Body '{"source":"firewall","event_type":"blocked_connection","severity":"medium","source_ip":"10.10.50.23","destination_ip":"192.168.1.10","port":443,"action":"deny"}'
+
+
+Future Development
+
+Planned features:
+
+Elasticsearch log storage
+Kibana security dashboards
+AI-powered threat analysis
+Automated alert classification
+Threat scoring engine
+Real-time detection rules
+Security analytics dashboard
+Project Goal
+
+The goal of this project is to build a fully containerized AI-assisted SIEM platform capable of ingesting security events, analyzing threats, and providing actionable security intelligence similar to enterprise SOC environments.
