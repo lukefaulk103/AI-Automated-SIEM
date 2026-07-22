@@ -3,11 +3,21 @@
 A containerized AI-powered Security Information and Event Management (SIEM) platform.
 
 ## Current Architecture
-Browser
-|
-Nginx
-|
-Flask API
+                 Security Logs
+                      |
+                      v
+              Nginx Reverse Proxy
+                Port 8080
+                      |
+                      v
+               Flask API Container
+                Port 5000
+                      |
+                      v
+          Validation + Normalization
+                      |
+                      v
+             Temporary Log Storage
 
 
 ## Technologies Used
