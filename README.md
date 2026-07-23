@@ -28,6 +28,10 @@ The project is built using Docker-based microservices and is designed to replica
                        |
                        v
           Persistent Docker Volume
+                       |
+                       v
+              Kibana Visualization
+                  Port 5601
 ```
 
 ---
@@ -49,11 +53,13 @@ The project is built using Docker-based microservices and is designed to replica
 - REST API
 - Elasticsearch Python Client
 
-## Data Storage
+## Data Storage and Analytics
 
 - Elasticsearch 8.15.0
+- Kibana 8.15.0
 - Indexed security event storage
 - Searchable log database
+- Security event visualization
 
 ---
 
@@ -68,6 +74,8 @@ The project is built using Docker-based microservices and is designed to replica
 - Centralized security event storage
 - SIEM-style event indexing
 - REST-based log collection
+- Security event visualization
+- SOC-style dashboard foundation
 
 ---
 
@@ -89,6 +97,9 @@ The project is built using Docker-based microservices and is designed to replica
 ✅ Persistent security log storage  
 ✅ Elasticsearch event indexing  
 ✅ Log retrieval from Elasticsearch  
+✅ Kibana integration  
+✅ Security event searching and filtering  
+✅ Kibana data visualization foundation  
 
 ---
 
@@ -111,7 +122,10 @@ Elasticsearch Index
 (security-logs)
       |
       v
-GET /api/logs
+Kibana Dashboard
+      |
+      v
+Security Event Analysis
 ```
 
 ---
@@ -209,9 +223,11 @@ Returns stored Elasticsearch security events.
 
 ---
 
-## Elasticsearch Status
+# Elasticsearch
 
-Elasticsearch is available internally through:
+Elasticsearch provides centralized security event storage.
+
+Internal container access:
 
 ```
 http://elasticsearch:9200
@@ -222,6 +238,33 @@ External testing:
 ```
 http://localhost:9200
 ```
+
+Index:
+
+```
+security-logs
+```
+
+---
+
+# Kibana Dashboard
+
+Kibana provides visualization and analysis of collected security events.
+
+Access:
+
+```
+http://localhost:5601
+```
+
+Current capabilities:
+
+✅ Security event search  
+✅ Log filtering  
+✅ Timestamp analysis  
+✅ Event investigation  
+⬜ SOC dashboards  
+⬜ Automated security visualizations  
 
 ---
 
@@ -245,30 +288,36 @@ docker compose up --build
 
 ---
 
-## Access Application
+# Access Application
 
-Web Interface:
+## Web Interface
 
 ```
 http://localhost:8080
 ```
 
-API Health Check:
+## API Health Check
 
 ```
 http://localhost:8080/api/health
 ```
 
-View Security Logs:
+## View Security Logs
 
 ```
 http://localhost:8080/api/logs
 ```
 
-Elasticsearch:
+## Elasticsearch
 
 ```
 http://localhost:9200
+```
+
+## Kibana
+
+```
+http://localhost:5601
 ```
 
 ---
@@ -336,10 +385,12 @@ Expected response:
 
 ## Milestone 5 — Kibana Dashboard
 
-⬜ Security dashboards  
-⬜ Event visualization  
-⬜ Search and filtering  
-⬜ Severity-based monitoring  
+✅ Kibana deployment  
+✅ Elasticsearch connection  
+✅ Security event visualization foundation  
+⬜ SOC dashboards  
+⬜ Severity monitoring panels  
+⬜ Attack timeline visualization  
 
 ---
 
@@ -364,7 +415,7 @@ Expected response:
 
 Planned features:
 
-- Kibana security dashboards
+- SOC-style Kibana dashboards
 - AI-powered threat analysis
 - Automated alert classification
 - Threat scoring engine
@@ -372,6 +423,7 @@ Planned features:
 - Attack pattern recognition
 - Security analytics dashboard
 - Automated incident response
+- Local network monitoring agents
 
 ---
 
@@ -388,3 +440,5 @@ This project demonstrates practical experience with:
 - Log management
 - Elasticsearch-based data pipelines
 - Security event analysis
+- SOC dashboard development
+- Cloud-native security architecture
