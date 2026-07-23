@@ -28,13 +28,12 @@ from detection import analyze_event
 app = Flask(__name__)
 
 
-# Connect to Elasticsearch container
+# Elasticsearch connection
 es = Elasticsearch(
     "http://elasticsearch:9200"
 )
 
 
-# Verify Elasticsearch connection
 if es.ping():
     print("Connected to Elasticsearch")
 else:
@@ -46,7 +45,8 @@ else:
 def home():
 
     return jsonify({
-        "message": "AI SIEM API Running"
+        "message": "AI SIEM API Running",
+        "version": "Milestone 6 - AI Threat Analysis"
     })
 
 
@@ -66,7 +66,6 @@ def receive_log():
     data = request.json
 
 
-    # Validate JSON input
     if not data:
 
         return jsonify({
@@ -75,40 +74,59 @@ def receive_log():
 
 
 
-    # Run security event through AI detection engine
+    # Run AI detection engine
     analysis = analyze_event(data)
 
 
 
     log_entry = {
 
-        # Unique event identifier
+
+        # Unique event ID
         "id": str(uuid.uuid4()),
 
 
-        # UTC timestamp
+        # Timestamp
         "timestamp": datetime.now(UTC).isoformat(),
 
 
-        # Core SIEM fields
+
+        # SIEM fields
         "source": data.get("source"),
+
         "event_type": data.get("event_type"),
+
         "severity": data.get("severity"),
 
 
-        # AI Detection Results
-        "alert": analysis["alert"],
-        "alert_type": analysis["alert_type"],
-        "risk_score": analysis["risk_score"],
+
+        # AI Analysis Results
+        "alert": len(analysis["alerts"]) > 0,
+
+        "alert_type": analysis["risk"],
+
+        "risk_score": analysis["threat_score"],
 
 
-        # Original event data
+        "threat_analysis": {
+
+            "classification": analysis["risk"],
+
+            "findings": analysis["alerts"],
+
+            "recommended_action": analysis["recommendation"]
+
+        },
+
+
+        # Original event
         "details": data
+
     }
 
 
 
-    # Store normalized event in Elasticsearch
+    # Store in Elasticsearch
     es.index(
         index="security-logs",
         document=log_entry
@@ -122,25 +140,34 @@ def receive_log():
 
         "id": log_entry["id"],
 
-        "alert": analysis["alert"],
+        "alert": log_entry["alert"],
 
-        "alert_type": analysis["alert_type"],
+        "risk": analysis["risk"],
 
-        "risk_score": analysis["risk_score"]
+        "risk_score": analysis["threat_score"]
 
     })
+
+
 
 
 
 @app.route("/logs", methods=["GET"])
 def get_logs():
 
+
     response = es.search(
+
         index="security-logs",
+
         size=100,
+
         query={
+
             "match_all": {}
+
         }
+
     )
 
 
@@ -152,32 +179,109 @@ def get_logs():
         logs.append(hit["_source"])
 
 
+
     return jsonify(logs)
+
+
+
+
+
+
+@app.route("/alerts")
+def alerts():
+
+
+    response = es.search(
+
+        index="security-logs",
+
+        size=100,
+
+        query={
+
+            "term": {
+
+                "alert": True
+
+            }
+
+        }
+
+    )
+
+
+    alerts = []
+
+
+    for hit in response["hits"]["hits"]:
+
+        alerts.append(hit["_source"])
+
+
+
+    return jsonify(alerts)
+
+
+
 
 
 
 @app.route("/stats")
 def stats():
 
-    response = es.count(
+
+    total = es.count(
+
         index="security-logs"
+
     )
+
+
+
+    critical = es.count(
+
+        index="security-logs",
+
+        query={
+
+            "term": {
+
+                "alert_type": "critical"
+
+            }
+
+        }
+
+    )
+
+
+
+    high = es.count(
+
+        index="security-logs",
+
+        query={
+
+            "term": {
+
+                "alert_type": "high"
+
+            }
+
+        }
+
+    )
+
 
 
     return jsonify({
 
-        "total_events": response["count"]
+
+        "total_events": total["count"],
+
+        "critical_alerts": critical["count"],
+
+        "high_alerts": high["count"]
 
     })
 
-
-
-if __name__ == "__main__":
-
-    app.run(
-
-        host="0.0.0.0",
-
-        port=5000
-
-    )
