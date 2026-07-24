@@ -1,36 +1,59 @@
 # AI SIEM Platform
 
-A containerized AI-powered Security Information and Event Management (SIEM) platform designed to collect, normalize, store, analyze, and visualize security events.
+A containerized AI-powered Security Information and Event Management (SIEM) platform designed to collect, normalize, analyze, correlate, and visualize security events.
 
-The project uses Docker-based microservices to replicate the core architecture of a modern Security Operations Center (SOC) environment.
+The project uses Docker-based microservices to replicate the architecture and workflow of a modern Security Operations Center (SOC) environment.
+
+The platform ingests security events, performs automated threat analysis, applies machine learning anomaly detection, correlates activity patterns, creates incidents, and provides SOC-style visualization through Elasticsearch and Kibana.
 
 ---
 
 # Current Architecture
 
-             Security Events
-                   |
-                   v
-          Nginx Reverse Proxy
-              Port 8080
-                   |
-                   v
-            Flask API Container
-              Port 5000
-                   |
-                   v
-      Validation + Normalization
-                   |
-                   v
-      AI Detection Engine
-                   |
-                   v
-      Elasticsearch Log Storage
-              Port 9200
-                   |
-                   v
-          Kibana Visualization
-              Port 5601
+```
+                 Security Events
+                       |
+                       v
+              Nginx Reverse Proxy
+                  Port 8080
+                       |
+                       v
+              Flask API Container
+                  Port 5000
+                       |
+                       v
+          Validation + Normalization
+                       |
+                       v
+            AI Detection Pipeline
+                       |
+        +--------------+--------------+
+        |                             |
+        v                             v
+ Rule-Based Detection        ML Anomaly Detection
+        |                             |
+        +--------------+--------------+
+                       |
+                       v
+              Threat Scoring Engine
+                       |
+                       v
+             MITRE ATT&CK Enrichment
+                       |
+                       v
+             Correlation Engine
+                       |
+                       v
+          Incident Creation + Deduplication
+                       |
+                       v
+        Elasticsearch Security Storage
+                  Port 9200
+                       |
+                       v
+             Kibana SOC Dashboard
+                  Port 5601
+```
 
 ---
 
@@ -59,6 +82,15 @@ The project uses Docker-based microservices to replicate the core architecture o
 - Log searching
 - Threat visualization
 - Risk scoring
+- Alert classification
+- Incident management
+
+## Machine Learning
+
+- Scikit-learn
+- Isolation Forest anomaly detection
+- Behavioral anomaly scoring
+- ML confidence scoring
 
 ---
 
@@ -68,13 +100,18 @@ The project uses Docker-based microservices to replicate the core architecture o
 - Log validation
 - Event normalization
 - Severity classification
-- Unique event identification
+- UUID event tracking
 - UTC timestamp normalization
-- Centralized security event storage
-- SIEM-style event indexing
+- Centralized security logging
+- SIEM event indexing
 - REST-based log collection
 - Threat scoring
-- Alert classification
+- Alert generation
+- Machine learning anomaly detection
+- MITRE ATT&CK mapping
+- Real-time event correlation
+- Incident creation
+- Incident deduplication
 - SOC dashboard development
 
 ---
@@ -85,7 +122,7 @@ The project uses Docker-based microservices to replicate the core architecture o
 
 ✅ Containerized Flask API service  
 ✅ Nginx reverse proxy  
-✅ Docker networking between services  
+✅ Docker service networking  
 ✅ Health monitoring endpoint  
 ✅ Security event ingestion API  
 ✅ JSON event validation  
@@ -98,59 +135,105 @@ The project uses Docker-based microservices to replicate the core architecture o
 ✅ Kibana integration  
 ✅ Security event searching  
 ✅ Security event filtering  
-✅ Kibana dashboards  
-✅ Risk score visualization  
-✅ AI detection engine  
-✅ Automated event risk classification  
+✅ Risk visualization  
+✅ AI threat detection engine  
+✅ Automated risk classification  
 ✅ Alert generation  
+✅ Machine learning anomaly detection  
+✅ Confidence scoring  
+✅ MITRE ATT&CK enrichment  
+✅ Real-time event correlation  
+✅ Brute force detection  
+✅ Incident generation  
+✅ Incident deduplication  
+✅ Incident tracking API  
 
 ---
 
 # Current Data Flow
 
-
+```
 Security Event
-|
-v
-POST /api/logs
-|
-v
-Flask API
-|
-v
-Input Validation
-|
-v
-AI Detection Engine
-|
-v
-Risk Score + Alert Classification
-|
-v
-Elasticsearch Index
-(security-logs)
-|
-v
-Kibana Dashboard
-|
-v
-SOC Event Analysis
 
+      |
+      v
+
+POST /api/logs
+
+      |
+      v
+
+Flask API
+
+      |
+      v
+
+Input Validation
+
+      |
+      v
+
+AI Detection Engine
+
+      |
+      +----------------+
+      |                |
+      v                v
+
+Rule Analysis     ML Detection
+
+      |
+      v
+
+Threat Score + Classification
+
+      |
+      v
+
+MITRE ATT&CK Mapping
+
+      |
+      v
+
+Correlation Engine
+
+      |
+      v
+
+Incident Management
+
+      |
+      v
+
+Elasticsearch Index
+
+      |
+      v
+
+Kibana Dashboard
+
+      |
+      v
+
+SOC Investigation
+```
 
 ---
 
 # AI Detection Engine
 
-Incoming events are analyzed automatically.
+Incoming events are automatically analyzed.
 
 The detection engine evaluates:
 
 - Event severity
 - Event type
 - Event source
-- Suspicious activity indicators
+- Suspicious indicators
+- Machine learning anomaly score
+- MITRE ATT&CK techniques
 
-Example:
+Example Input:
 
 ```json
 {
@@ -160,59 +243,159 @@ Example:
     "username": "admin",
     "ip": "192.168.1.55"
 }
+```
 
-The AI analysis produces:
+AI Analysis Output:
 
+```json
 {
     "alert": true,
-    "alert_type": "brute_force_attempt",
-    "risk_score": 80
-}
-Example Security Event
-
-Input:
-
-{
-    "source": "firewall",
-    "event_type": "blocked_connection",
-    "severity": "high",
-    "source_ip": "10.10.50.23",
-    "destination_ip": "192.168.1.10",
-    "port":443,
-    "action":"deny"
-}
-
-Stored event:
-
-{
-    "id": "event-uuid",
-    "timestamp": "UTC timestamp",
-    "source": "firewall",
-    "event_type": "blocked_connection",
-    "severity": "high",
-    "alert": true,
-    "risk_score": 70,
-    "details": {
-        "source_ip":"10.10.50.23",
-        "destination_ip":"192.168.1.10",
-        "port":443,
-        "action":"deny"
+    "risk": "critical",
+    "risk_score": 100,
+    "recommendation": "Immediate investigation required",
+    "mitre": {
+        "technique": "T1110",
+        "name": "Brute Force"
     }
 }
-API Endpoints
-Health Check
-GET /api/health
+```
 
-Response:
+---
 
-{
-    "status":"healthy"
-}
-Submit Security Event
-POST /api/logs
+# Machine Learning Detection
+
+The platform uses an Isolation Forest model to identify anomalous security activity.
+
+The ML engine evaluates:
+
+- Event severity
+- Event type
+- Suspicious activity patterns
 
 Example:
 
+```
+Failed Login Attempts
+        +
+High Severity
+        +
+Unknown Behavior Pattern
+
+        |
+
+Machine Learning Detection
+
+        |
+
+Anomaly Identified
+```
+
+---
+
+# Real-Time Correlation Engine
+
+The correlation engine analyzes multiple events together to identify attack patterns.
+
+Current correlation:
+
+## Brute Force Detection
+
+Example:
+
+```
+Multiple Failed Login Attempts
+
+        |
+
+Same Username
+
+        |
+
+Same Source IP
+
+        |
+
+Incident Created
+```
+
+Generated Incident:
+
+```json
+{
+    "incident_type": "Brute Force Attack",
+    "severity": "critical",
+    "event_count": 5,
+    "status": "open",
+    "recommendation": "Investigate possible credential compromise"
+}
+```
+
+---
+
+# Incident Management
+
+The platform automatically:
+
+- Creates incidents
+- Tracks repeated activity
+- Prevents duplicate incidents
+- Updates existing investigations
+
+Incident lifecycle:
+
+```
+Security Event
+
+      |
+
+Detection
+
+      |
+
+Correlation
+
+      |
+
+Incident Created
+
+      |
+
+Additional Events
+
+      |
+
+Existing Incident Updated
+```
+
+---
+
+# API Endpoints
+
+## Health Check
+
+```
+GET /api/health
+```
+
+Response:
+
+```json
+{
+    "status":"healthy"
+}
+```
+
+---
+
+## Submit Security Event
+
+```
+POST /api/logs
+```
+
+Example:
+
+```json
 {
     "source":"firewall",
     "event_type":"blocked_connection",
@@ -221,212 +404,271 @@ Example:
     "destination_ip":"192.168.1.10",
     "port":443
 }
-Retrieve Security Events
+```
+
+---
+
+## Retrieve Security Events
+
+```
 GET /api/logs
+```
 
-Returns Elasticsearch security events.
+Returns indexed security events.
 
-Security Statistics
+---
+
+## Retrieve Alerts
+
+```
+GET /api/alerts
+```
+
+Returns detected security alerts.
+
+---
+
+## Retrieve Incidents
+
+```
+GET /api/incidents
+```
+
+Returns correlated security incidents.
+
+---
+
+## Security Statistics
+
+```
 GET /api/stats
+```
 
-Returns:
+Example:
 
+```json
 {
-    "total_events":25
+    "total_events":100,
+    "critical_alerts":20,
+    "high_alerts":35,
+    "security_incidents":5
 }
-Elasticsearch
+```
+
+---
+
+# Elasticsearch
 
 Elasticsearch provides centralized security event storage.
 
-External access:
+Access:
 
+```
 http://localhost:9200
+```
 
-Index:
+Indexes:
 
+```
 security-logs
-Kibana Dashboard
+security-incidents
+```
+
+---
+
+# Kibana Dashboard
 
 Kibana provides visualization and investigation capabilities.
 
 Access:
 
+```
 http://localhost:5601
+```
 
 Current capabilities:
 
-✅ Security event searching
-✅ Event filtering
-✅ Timestamp analysis
-✅ Severity visualization
-✅ Risk score monitoring
-✅ Alert investigation
-✅ SOC dashboard foundation
-
-Running the Project
-
-Clone repository:
-
-git clone <repository-url>
-
-cd ai-siem
-
-Start containers:
-
-docker compose up --build
-Access
-
-Application:
-
-http://localhost:8080
-
-API:
-
-http://localhost:8080/api/health
-
-Logs:
-
-http://localhost:8080/api/logs
-
-Elasticsearch:
-
-http://localhost:9200
-
-Kibana:
-
-http://localhost:5601
-Testing
-
-Example PowerShell test:
-
-Invoke-RestMethod `
--Uri "http://localhost:8080/api/logs" `
--Method POST `
--Headers @{
-    "Content-Type"="application/json"
-} `
--Body '{"source":"firewall","event_type":"blocked_connection","severity":"high","source_ip":"10.10.50.23","destination_ip":"192.168.1.10","port":443,"action":"deny"}'
-
-Expected:
-
-{
-    "message":"Log stored",
-    "id":"generated-uuid",
-    "risk_score":70
-}
-Development Roadmap
-Milestone 1 — Container Infrastructure
-
-✅ Docker environment
-✅ Docker Compose setup
-✅ Nginx service
-
-Milestone 2 — API Development
-
-✅ Flask API container
-✅ API routing
-✅ Health monitoring
-
-Milestone 3 — SIEM Event Pipeline
-
-✅ Security log ingestion
-✅ Validation layer
-✅ Event normalization
-✅ UUID tracking
-
-Milestone 4 — Elasticsearch Integration
-
-✅ Elasticsearch deployment
-✅ Persistent log storage
-✅ Security event indexing
-✅ Elasticsearch API integration
-
-Milestone 5 — Kibana Dashboard
-
-✅ Kibana deployment
-✅ Elasticsearch connection
-✅ Security event visualization
-✅ Severity monitoring panels
-✅ Risk score visualization
-✅ SOC dashboard foundation
-
-Milestone 6 — AI Threat Analysis
-
-🟨 Current Phase
-
-⬜ Machine learning anomaly detection
-⬜ Behavioral analysis
-⬜ Advanced threat scoring
-⬜ Threat intelligence integration
-
-Milestone 7 — Automated Response
-
-⬜ Threat notifications
-⬜ Security playbooks
-⬜ Automated remediation actions
-⬜ Incident response workflows
-
-Future Development
-
-Planned features:
-
-SOC-style dashboards
-Machine learning anomaly detection
-Threat intelligence feeds
-Real-time detection rules
-Attack pattern recognition
-Automated incident response
-Network monitoring agents
-Windows event collectors
-Linux audit log collectors
-Cloud security integrations
-Project Goal
-
-The goal of this project is to build a fully containerized AI-assisted SIEM platform capable of ingesting security events, analyzing threats, and providing actionable security intelligence similar to enterprise SOC environments.
-
-This project demonstrates practical experience with:
-
-SIEM architecture
-Security monitoring
-Docker deployments
-REST API development
-Elasticsearch pipelines
-Security analytics
-Threat detection
-SOC dashboard development
-Cloud-native security architecture
+✅ Security event searching  
+✅ Event filtering  
+✅ Timestamp analysis  
+✅ Severity visualization  
+✅ Risk score monitoring  
+✅ Alert investigation  
+✅ Incident tracking  
+✅ SOC dashboard foundation  
 
 ---
 
-## Before pushing to GitHub, I recommend one final cleanup:
+# Running the Project
 
-Run:
+Clone repository:
 
 ```powershell
-docker compose down
+git clone <repository-url>
 
-Then:
+cd ai-siem
+```
 
+Start containers:
+
+```powershell
 docker compose up --build
+```
 
-Make sure a fresh deployment works.
+---
 
-Then:
+# Access
 
-git status
+Application:
 
-You should see:
+```
+http://localhost:8080
+```
 
-modified:
- README.md
- api/app.py
- api/detection.py
- compose.yml
+API:
 
-Then:
+```
+http://localhost:8080/api/health
+```
 
-git add .
-git commit -m "Completed AI SIEM pipeline with Elasticsearch, Kibana, and threat scoring"
-git push
+Logs:
 
-This is a very solid milestone. Your project has moved past being a "Docker Flask app" and is now legitimately resembling a small SOC platform. The next logical milestone is Milestone 6: improving the AI detection engine — moving from static rules into anomaly detection and threat intelligence enrichment.
+```
+http://localhost:8080/api/logs
+```
+
+Alerts:
+
+```
+http://localhost:8080/api/alerts
+```
+
+Incidents:
+
+```
+http://localhost:8080/api/incidents
+```
+
+Elasticsearch:
+
+```
+http://localhost:9200
+```
+
+Kibana:
+
+```
+http://localhost:5601
+```
+
+---
+
+# Development Roadmap
+
+## Milestone 1 — Container Infrastructure
+
+✅ Docker environment  
+✅ Docker Compose setup  
+✅ Nginx service  
+
+---
+
+## Milestone 2 — API Development
+
+✅ Flask API container  
+✅ API routing  
+✅ Health monitoring  
+
+---
+
+## Milestone 3 — SIEM Event Pipeline
+
+✅ Security log ingestion  
+✅ Validation layer  
+✅ Event normalization  
+✅ UUID tracking  
+
+---
+
+## Milestone 4 — Elasticsearch Integration
+
+✅ Elasticsearch deployment  
+✅ Persistent storage  
+✅ Security event indexing  
+
+---
+
+## Milestone 5 — Kibana Visualization
+
+✅ Kibana deployment  
+✅ Elasticsearch connection  
+✅ SOC dashboard creation  
+✅ Security visualization  
+
+---
+
+## Milestone 6 — AI Threat Analysis
+
+✅ Rule-based detection  
+✅ Machine learning anomaly detection  
+✅ Threat scoring  
+✅ Confidence scoring  
+✅ MITRE ATT&CK enrichment  
+✅ Alert classification  
+
+---
+
+## Milestone 6.5 — Correlation & Incident Management
+
+✅ Real-time correlation  
+✅ Brute force detection  
+✅ Incident creation  
+✅ Incident deduplication  
+✅ Incident tracking  
+
+---
+
+## Milestone 7 — Threat Intelligence & Automated Response
+
+⬜ Threat intelligence feeds  
+⬜ IOC enrichment  
+⬜ Automated notifications  
+⬜ Security playbooks  
+⬜ Automated remediation actions  
+⬜ Incident response workflows  
+
+---
+
+# Future Development
+
+Planned features:
+
+- Threat intelligence integration
+- IOC reputation checking
+- Automated response actions
+- Windows event collectors
+- Linux audit collectors
+- Network monitoring agents
+- Cloud security integrations
+- Advanced behavioral analytics
+- SOC automation workflows
+
+---
+
+# Project Goal
+
+The goal of this project is to build a fully containerized AI-assisted SIEM platform capable of ingesting security events, analyzing threats, correlating attack patterns, and providing actionable security intelligence similar to enterprise SOC environments.
+
+This project demonstrates practical experience with:
+
+- SIEM architecture
+- Security monitoring
+- Detection engineering
+- Docker deployments
+- REST API development
+- Elasticsearch pipelines
+- Machine learning security analytics
+- Threat detection
+- Incident management
+- SOC dashboard development
+- Cloud-native security architecture
