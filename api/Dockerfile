@@ -11,3 +11,5 @@ COPY . .
 EXPOSE 5000
 
 CMD ["python", "app.py"]
+
+RUN mkdir -p models
