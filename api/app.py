@@ -1,28 +1,8 @@
-import sys
-import subprocess
-
-try:
-    from flask import Flask, jsonify, request  # type: ignore[import]
-except ModuleNotFoundError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "flask"])
-    from flask import Flask, jsonify, request  # type: ignore[import]
-
-
+from flask import Flask, jsonify, request
 from datetime import datetime, UTC
-
-
-try:
-    from elasticsearch import Elasticsearch  # type: ignore[import]
-except ModuleNotFoundError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "elasticsearch"])
-    from elasticsearch import Elasticsearch  # type: ignore[import]
-
-
-import uuid
-
-
-# AI SIEM Detection Engine
+from elasticsearch import Elasticsearch
 from detection import analyze_event
+import uuid
 
 
 app = Flask(__name__)
@@ -34,6 +14,7 @@ es = Elasticsearch(
 )
 
 
+# Verify Elasticsearch connection
 if es.ping():
     print("Connected to Elasticsearch")
 else:
@@ -63,7 +44,7 @@ def health():
 @app.route("/logs", methods=["POST"])
 def receive_log():
 
-    data = request.json
+    data = request.get_json()
 
 
     if not data:
@@ -74,80 +55,171 @@ def receive_log():
 
 
 
-    # Run AI detection engine
+    # Run event through AI detection pipeline
     analysis = analyze_event(data)
 
+
+
+    event_id = str(uuid.uuid4())
 
 
     log_entry = {
 
 
-        # Unique event ID
-        "id": str(uuid.uuid4()),
+        # -------------------------
+        # Event Metadata
+        # -------------------------
+
+        "id": event_id,
 
 
-        # Timestamp
-        "timestamp": datetime.now(UTC).isoformat(),
-
-
-
-        # SIEM fields
-        "source": data.get("source"),
-
-        "event_type": data.get("event_type"),
-
-        "severity": data.get("severity"),
+        "timestamp":
+            datetime.now(UTC).isoformat(),
 
 
 
-        # AI Analysis Results
-        "alert": len(analysis["alerts"]) > 0,
+        # -------------------------
+        # Original SIEM Fields
+        # -------------------------
 
-        "alert_type": analysis["risk"],
+        "source":
+            data.get("source"),
 
-        "risk_score": analysis["threat_score"],
+
+        "event_type":
+            data.get("event_type"),
 
 
-        "threat_analysis": {
+        "severity":
+            data.get("severity"),
 
-            "classification": analysis["risk"],
 
-            "findings": analysis["alerts"],
 
-            "recommended_action": analysis["recommendation"]
+
+        # -------------------------
+        # AI Threat Assessment
+        # -------------------------
+
+        "analysis": {
+
+
+            "alert":
+                analysis["alert"],
+
+
+
+            "risk":
+                analysis["risk"],
+
+
+
+            "risk_score":
+                analysis["threat_score"],
+
+
+
+            "confidence_score":
+                analysis["confidence_score"],
+
+
+
+            "findings":
+                analysis["alerts"],
+
+
+
+            "recommendation":
+                analysis["recommendation"],
+
+
+
+            # ML results
+
+            "machine_learning": {
+
+                "anomaly":
+                    analysis["ml_analysis"]["anomaly"],
+
+
+                "confidence":
+                    analysis["ml_analysis"]["confidence"]
+
+            },
+
+
+
+            # MITRE ATT&CK enrichment
+
+            "mitre": {
+
+                "technique":
+                    analysis["mitre_technique"],
+
+
+                "name":
+                    analysis["mitre_name"]
+
+            }
+
 
         },
 
 
-        # Original event
-        "details": data
+
+        # -------------------------
+        # Original Event Payload
+        # -------------------------
+
+        "details":
+            data
 
     }
 
 
 
-    # Store in Elasticsearch
+    # Store analyzed security event
+
     es.index(
+
         index="security-logs",
+
         document=log_entry
+
     )
 
 
 
     return jsonify({
 
-        "message": "Log stored",
 
-        "id": log_entry["id"],
+        "message":
+            "Log stored",
 
-        "alert": log_entry["alert"],
 
-        "risk": analysis["risk"],
+        "id":
+            event_id,
 
-        "risk_score": analysis["threat_score"]
+
+        "alert":
+            analysis["alert"],
+
+
+        "risk":
+            analysis["risk"],
+
+
+        "risk_score":
+            analysis["threat_score"],
+
+
+        "ml_anomaly":
+            analysis["ml_analysis"]["anomaly"],
+
+
+        "recommendation":
+            analysis["recommendation"]
 
     })
-
 
 
 
@@ -163,9 +235,7 @@ def get_logs():
         size=100,
 
         query={
-
             "match_all": {}
-
         }
 
     )
@@ -176,13 +246,12 @@ def get_logs():
 
     for hit in response["hits"]["hits"]:
 
-        logs.append(hit["_source"])
-
+        logs.append(
+            hit["_source"]
+        )
 
 
     return jsonify(logs)
-
-
 
 
 
@@ -201,7 +270,7 @@ def alerts():
 
             "term": {
 
-                "alert": True
+                "analysis.alert": True
 
             }
 
@@ -215,13 +284,12 @@ def alerts():
 
     for hit in response["hits"]["hits"]:
 
-        alerts.append(hit["_source"])
-
+        alerts.append(
+            hit["_source"]
+        )
 
 
     return jsonify(alerts)
-
-
 
 
 
@@ -246,7 +314,7 @@ def stats():
 
             "term": {
 
-                "alert_type": "critical"
+                "analysis.risk.keyword": "critical"
 
             }
 
@@ -264,7 +332,7 @@ def stats():
 
             "term": {
 
-                "alert_type": "high"
+                "analysis.risk.keyword": "high"
 
             }
 
@@ -276,12 +344,28 @@ def stats():
 
     return jsonify({
 
+        "total_events":
+            total["count"],
 
-        "total_events": total["count"],
 
-        "critical_alerts": critical["count"],
+        "critical_alerts":
+            critical["count"],
 
-        "high_alerts": high["count"]
+
+        "high_alerts":
+            high["count"]
 
     })
 
+
+
+
+if __name__ == "__main__":
+
+    app.run(
+
+        host="0.0.0.0",
+
+        port=5000
+
+    )
